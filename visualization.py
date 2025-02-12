@@ -84,7 +84,6 @@ for index, (name, coord) in enumerate(coordinates):
     popup_html = popup_html = f'''
         <div style="text-align: center;">
             <h4>{name}</h4>
-            <h4>{index}</h4>
             <img src="data:image/png;base64,{base64_images[index]}" width="150px">
             <br>
             <a href="?farm={name.replace(' ', '_')}" target="_self">View Details</a>
