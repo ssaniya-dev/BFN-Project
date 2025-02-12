@@ -13,37 +13,55 @@ dataset = pd.read_csv("preprocessed_bfn.csv")
 
 
 # Define coordinates
+
+# Define coordinates
 coordinates = [
-    (30.8730159, -83.54965659999999),
-    (31.9981596, -84.2278796),
-    (30.8417409, -83.8473015),
-    (31.5282489, -83.8897057),
-    (33.2882621, -83.03613759999999),
-    (31.2008218, -84.7315563),
-    (33.5794186, -83.46435509999999),
-    (32.3595678, -81.77870209999999),
-    (31.2624169, -81.6035062),
-    (30.8417409, -83.8473015),
-    (33.088805, -81.9534815),
-    (31.5439375, -84.2278796)
+    ("Rountree Farm", (30.8730159, -83.54965659999999)),
+    ("Morgan Farm", (31.9981596, -84.2278796)),
+    ("Lewis Clark Farm", (30.8417409, -83.8473015)),
+    ("Fowler Farm", (31.5282489, -83.8897057)),
+    ("Hubert Farm", (33.2882621, -83.03613759999999)),
+    ("Kindler Farm", (31.2008218, -84.7315563)),
+    ("Charleston-Allen Farm", (33.5794186, -83.46435509999999)),
+    ("Garfield Hall Farm", (32.3595678, -81.77870209999999)),
+    ("Gilliard Farm", (31.2624169, -81.6035062)),
+    ("Williams Farm", (30.8365815, -83.9787808)),
+    ("Cooper Farm", (33.088805, -81.9534815)),
+    ("Stephens Farm", (31.5439375, -84.2278796))
 ]
 
 # Calculate the center of the map
-center_lat = sum(coord[0] for coord in coordinates) / len(coordinates)
-center_lon = sum(coord[1] for coord in coordinates) / len(coordinates)
+center_lat = sum(lat for _, (lat, lon) in coordinates) / len(coordinates)
+center_lon = sum(lon for _, (lat, lon) in coordinates) / len(coordinates)
+
+# Create a dictionary for farm descriptions (you can replace these placeholder descriptions later)
+farm_descriptions = {
+    "Rountree Farm": "Description for Rountree Farm...",
+    "Morgan Farm": "Description for Morgan Farm...",
+    "Lewis Clark Farm": "Description for Lewis Clark Farm...",
+    # ... Add descriptions for all farms ...
+}
 
 # Create a Folium map centered on Georgia
 m = folium.Map(location=[center_lat, center_lon], 
                zoom_start=7,
-               tiles='CartoDB positron')  # Using a clean, modern map style
+               tiles='CartoDB positron')
 
 # Add markers for each location
-for idx, coord in enumerate(coordinates, 1):
+for name, coord in coordinates:
+    # Create HTML for the popup with a link
+    popup_html = f'''
+        <div style="text-align: center;">
+            <h4>{name}</h4>
+            <a href="?farm={name.replace(' ', '_')}" target="_self">View Details</a>
+        </div>
+    '''
+    
     folium.CircleMarker(
         location=coord,
         radius=8,
-        popup=f'Location {idx}',
-        color='#FF4B4B',  # Red color for visibility
+        popup=folium.Popup(popup_html, max_width=200),
+        color='#FF4B4B',
         fill=True,
         fill_color='#FF4B4B',
         fill_opacity=0.7,
@@ -67,20 +85,31 @@ title_html = '''
              '''
 m.get_root().html.add_child(folium.Element(title_html))
 
-# Create two columns
-col1, col2 = st.columns([2, 1])
+# Add farm detail page handling
+selected_farm = st.query_params.get("farm", "").replace("_", " ")
+if selected_farm in dict(coordinates):
+    st.title(selected_farm)
+    
+    # Display farm description (you can replace this with real descriptions later)
+    st.markdown("### About the Farm")
+    st.write(farm_descriptions.get(selected_farm, "Description coming soon..."))
+    
+    # Add a back button
+    if st.button("← Back to Map"):
+        st.query_params.clear()
+        st.rerun()
+else:
+    # Original map view code
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
+        st_folium(m, width=800, height=600)
+    
+    with col2:
+        # Replace "Location Statistics" with a numbered list of farm names
+        st.markdown("### Farm Locations")
+        for index, (name, _) in enumerate(coordinates, start=1):
+            st.write(f"{index}. {name}")
 
-with col1:
-    # Display the map
-    st_folium(m, width=800, height=600)
 
-with col2:
-    # Add some statistics or information
-    st.markdown("### Location Statistics")
-    st.write(f"Total Locations: {len(coordinates)}")
-    st.write("Geographic Distribution:")
-    st.write(f"- Northernmost: {max(coord[0] for coord in coordinates):.2f}°N")
-    st.write(f"- Southernmost: {min(coord[0] for coord in coordinates):.2f}°N")
-    st.write(f"- Easternmost: {max(coord[1] for coord in coordinates):.2f}°W")
-    st.write(f"- Westernmost: {min(coord[1] for coord in coordinates):.2f}°W")
 
