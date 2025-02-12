@@ -1,9 +1,20 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import folium
+from streamlit_folium import st_folium
+import base64
+import os
+
+st.set_page_config(layout="wide")
 
 st.title("BFN Map Visualization")
 st.markdown("### Black Farmers Network Locations in Georgia")
+
+dataset = pd.read_csv("preprocessed_bfn.csv")
+
+
+# Define coordinates
 
 # Define coordinates
 coordinates = [
@@ -22,26 +33,70 @@ coordinates = [
 ]
 
 # Calculate the center of the map
-center_lat = sum(coord[1][0] for coord in coordinates) / len(coordinates)
-center_lon = sum(coord[1][1] for coord in coordinates) / len(coordinates)
+center_lat = sum(lat for _, (lat, lon) in coordinates) / len(coordinates)
+center_lon = sum(lon for _, (lat, lon) in coordinates) / len(coordinates)
+
+# Create a dictionary for farm descriptions (you can replace these placeholder descriptions later)
+farm_descriptions = {
+    "Rountree Farm": "Description for Rountree Farm...",
+    "Morgan Farm": "Description for Morgan Farm...",
+    "Lewis Clark Farm": "Description for Lewis Clark Farm...",
+    # ... Add descriptions for all farms ...
+}
+
+
+# Function to convert image to base64
+def image_to_base64(image_path):
+    with open(image_path, "rb") as img_file:
+        return base64.b64encode(img_file.read()).decode("utf-8")
+
+# Directory containing images
+image_dir = "images"
+base64_images = []
+
+# Get list of image files and sort to maintain order
+image_files = sorted(os.listdir(image_dir))
+
+# Convert each image to base64
+for i, image_file in enumerate(image_files):
+    image_path = os.path.join(image_dir, image_file)
+    if os.path.isfile(image_path):
+        base64_images.append(image_to_base64(image_path))
+
 
 # Create a Folium map centered on Georgia
 m = folium.Map(location=[center_lat, center_lon], 
                zoom_start=7,
-               tiles='CartoDB positron')  # Using a clean, modern map style
+               tiles='CartoDB Positron')
+
+folium.TileLayer(
+    tiles='https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}{r}.{ext}', 
+    attr='&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://www.stamen.com/" target="_blank">Stamen Design</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', 
+    min_zoom=0, 
+    max_zoom=18, 
+    ext='png', 
+    name="Stadia_StamenTerrain"
+).add_to(m)
 
 # Add markers for each location
-for name, coord in coordinates:
-    folium.CircleMarker(
-        location=coord,
-        radius=8,
-        popup=f'{name}',
-        color='#FF4B4B',  # Red color for visibility
-        fill=True,
-        fill_color='#FF4B4B',
-        fill_opacity=0.7,
-        weight=2
+for index, (name, coord) in enumerate(coordinates):
+    # Create HTML for the popup with a link
+    popup_html = popup_html = f'''
+        <div style="text-align: center;">
+            <h4>{name}</h4>
+            <h4>{index}</h4>
+            <img src="data:image/png;base64,{base64_images[index]}" width="150px">
+            <br>
+            <a href="?farm={name.replace(' ', '_')}" target="_self">View Details</a>
+        </div>
+    '''
+    
+    folium.Marker(
+    location=coord,
+    popup=folium.Popup(popup_html, max_width=200),
+    icon=folium.Icon(color="red", icon="star", prefix="fa")  # Green star icon
     ).add_to(m)
+
 
 # Add a title to the map
 title_html = '''
@@ -51,7 +106,7 @@ title_html = '''
                          width: 300px; 
                          height: 90px; 
                          z-index:9999; 
-                         background-color: rgba(255, 255, 255, 0.8); 
+                         background-color: rgba(243, 229, 171, 0.8); 
                          border-radius: 10px; 
                          padding: 10px;">
                  <h4>Black Farmers Network Locations</h4>
@@ -60,26 +115,28 @@ title_html = '''
              '''
 m.get_root().html.add_child(folium.Element(title_html))
 
-# Create two columns
-col1, col2 = st.columns([2, 1])
-
-with col1:
-    # Display the map
-    st_folium(m, width=800, height=600)
-
-with col2:
-    # Add some statistics or information
-
-    northernmost_farm, northernmost_coord = max(coordinates, key=lambda coord: coord[1][0])
-    southernmost_farm, southernmost_coord = min(coordinates, key=lambda coord: coord[1][0])
-    easternmost_farm, easternmost_coord = max(coordinates, key=lambda coord: coord[1][1])
-    westernmost_farm, westernmost_coord = min(coordinates, key=lambda coord: coord[1][1])
-
-    st.markdown("### Location Statistics")
-    st.write(f"Total Locations: {len(coordinates)}")
-    st.write("Geographic Distribution:")
-    st.write(f"- Northernmost: {northernmost_farm} ({northernmost_coord[0]:.2f}°N)")
-    st.write(f"- Southernmost: {southernmost_farm} ({southernmost_coord[0]:.2f}°N)")
-    st.write(f"- Easternmost: {easternmost_farm} ({easternmost_coord[1]:.2f}°W)")
-    st.write(f"- Westernmost: {westernmost_farm} ({westernmost_coord[1]:.2f}°W)")
-
+# Add farm detail page handling
+selected_farm = st.query_params.get("farm", "").replace("_", " ")
+if selected_farm in dict(coordinates):
+    st.title(selected_farm)
+    
+    # Display farm description (you can replace this with real descriptions later)
+    st.markdown("### About the Farm")
+    st.write(farm_descriptions.get(selected_farm, "Description coming soon..."))
+    
+    # Add a back button
+    if st.button("← Back to Map"):
+        st.query_params.clear()
+        st.rerun()
+else:
+    # Original map view code
+    col1, col2 = st.columns([2, 1])
+    
+    with col1:
+        st_folium(m, width=800, height=600)
+    
+    with col2:
+        # Replace "Location Statistics" with a numbered list of farm names
+        st.markdown("### Farm Locations")
+        for index, (name, _) in enumerate(coordinates, start=1):
+            st.write(f"{index}. {name}")
