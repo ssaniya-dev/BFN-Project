@@ -9,6 +9,9 @@ st.set_page_config(layout="wide")
 st.title("BFN Map Visualization")
 st.markdown("### Black Farmers Network Locations in Georgia")
 
+dataset = pd.read_csv("preprocessed_bfn.csv")
+
+
 # Define coordinates
 coordinates = [
     (30.8730159, -83.54965659999999),
