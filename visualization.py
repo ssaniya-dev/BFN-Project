@@ -3,8 +3,13 @@ import pandas as pd
 import numpy as np
 import folium
 from streamlit_folium import st_folium
+import base64
+import os
 
 st.set_page_config(layout="wide")
+
+# st.title("BFN Map Visualization")
+# st.markdown("### Black Farmers Network Locations in Georgia")
 
 st.markdown("<h1 style='text-align: center; margin-bottom: 10px'>Black Farmers Network Centennial Farms</h1>", unsafe_allow_html=True)
 st.markdown("<h3 style='text-align: center; margin-bottom: 10px; '>What are Black Owned Centennial Farms?</h3>", unsafe_allow_html=True)
@@ -44,31 +49,58 @@ farm_descriptions = {
     # ... Add descriptions for all farms ...
 }
 
+
+# Function to convert image to base64
+def image_to_base64(image_path):
+    with open(image_path, "rb") as img_file:
+        return base64.b64encode(img_file.read()).decode("utf-8")
+
+# Directory containing images
+image_dir = "images"
+base64_images = []
+
+# Get list of image files and sort to maintain order
+image_files = sorted(os.listdir(image_dir))
+
+# Convert each image to base64
+for i, image_file in enumerate(image_files):
+    image_path = os.path.join(image_dir, image_file)
+    if os.path.isfile(image_path):
+        base64_images.append(image_to_base64(image_path))
+
+
 # Create a Folium map centered on Georgia
 m = folium.Map(location=[center_lat, center_lon], 
                zoom_start=7,
-               tiles='CartoDB positron')
+               tiles='CartoDB Positron')
+
+folium.TileLayer(
+    tiles='https://tiles.stadiamaps.com/tiles/stamen_terrain/{z}/{x}/{y}{r}.{ext}', 
+    attr='&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://www.stamen.com/" target="_blank">Stamen Design</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors', 
+    min_zoom=0, 
+    max_zoom=18, 
+    ext='png', 
+    name="Stadia_StamenTerrain"
+).add_to(m)
 
 # Add markers for each location
-for name, coord in coordinates:
+for index, (name, coord) in enumerate(coordinates):
     # Create HTML for the popup with a link
-    popup_html = f'''
+    popup_html = popup_html = f'''
         <div style="text-align: center;">
             <h4>{name}</h4>
+            <img src="data:image/png;base64,{base64_images[index]}" width="150px">
+            <br>
             <a href="?farm={name.replace(' ', '_')}" target="_self">View Details</a>
         </div>
     '''
     
-    folium.CircleMarker(
-        location=coord,
-        radius=8,
-        popup=folium.Popup(popup_html, max_width=200),
-        color='#FF4B4B',
-        fill=True,
-        fill_color='#FF4B4B',
-        fill_opacity=0.7,
-        weight=2
+    folium.Marker(
+    location=coord,
+    popup=folium.Popup(popup_html, max_width=200),
+    icon=folium.Icon(color="red", icon="star", prefix="fa")  # Green star icon
     ).add_to(m)
+
 
 # Add a title to the map
 title_html = '''
@@ -78,7 +110,7 @@ title_html = '''
                          width: 300px; 
                          height: 90px; 
                          z-index:9999; 
-                         background-color: rgba(255, 255, 255, 0.8); 
+                         background-color: rgba(243, 229, 171, 0.8); 
                          border-radius: 10px; 
                          padding: 10px;">
                  <h4>Black Farmers Network Locations</h4>
@@ -112,6 +144,3 @@ else:
         st.markdown("### Farm Locations")
         for index, (name, _) in enumerate(coordinates, start=1):
             st.write(f"{index}. {name}")
-
-
-
