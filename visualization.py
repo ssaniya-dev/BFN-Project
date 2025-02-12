@@ -8,8 +8,13 @@ import os
 
 st.set_page_config(layout="wide")
 
-st.title("BFN Map Visualization")
-st.markdown("### Black Farmers Network Locations in Georgia")
+# st.title("BFN Map Visualization")
+# st.markdown("### Black Farmers Network Locations in Georgia")
+
+st.markdown("<h1 style='text-align: center; margin-bottom: 10px'>Black Farmers Network Centennial Farms</h1>", unsafe_allow_html=True)
+st.markdown("<h3 style='text-align: center; margin-bottom: 10px; '>What are Black Owned Centennial Farms?</h3>", unsafe_allow_html=True)
+st.markdown("Black Owned Centennial Farms are farms that have been owned and operated by the same family for 100 years or more. These farms have been passed down through generations and have a rich history that is often tied to the broader history of Black Americans in the United States. The Black Farmers Network (BFN) is an organization that works to preserve and promote these historic farms, and to support the families that own them. Currently, there are 12 centennial farms in Georgia which demonstrates the rarity of these farms. Please interact with the map to learn more about Black Owned Centennial Farms! ")
+st.markdown("<h3 style='text-align: center; margin-bottom: 30px;'>Black Farmers Network Centennial Farms Locations in Georgia</h3>", unsafe_allow_html=True)
 
 dataset = pd.read_csv("preprocessed_bfn.csv")
 
