@@ -36,18 +36,36 @@ coordinates = [
     ("Cooper Farm", (33.088805, -81.9534815)),
     ("Stephens Farm", (31.5439375, -84.2278796))
 ]
+farm_descriptions = {
+    "Rountree Farm": "John Willis Rountree, a skilled carpenter and farmer, purchased the land in 1891. By 1930, the farm housed horses, mules, tobacco, a cotton house, a smokehouse, and water wells. The farm received the Centennial Family Farm Award in 1994.",
+    
+    "Morgan Farm": "The Morgan Centennial Farm, established in 1886 by former slave Nathan Morgan, remains a symbol of African American agricultural heritage. It was awarded the Centennial Family Farm Award in 1995 and listed in the National Register of Historic Places in 1998.",
+    
+    "Lewis Clark Farm": "Founded in 1875 by Lewis Clark, this farm originally produced cotton, corn, sweet potatoes, sugar cane, and vegetables. Passed down through generations, the farm remains in family hands today.",
+    
+    "Fowler Farm": "Reverend James Fowler acquired 202 acres in 1888 and became a leading cotton producer. His descendants expanded the farm to include peanuts, wheat, and soybeans, with 160 acres still in use today.",
+    
+    "Hubert Farm": "Founded by former slave Zach Hubert, this historic farm has been in the Hubert family for over a century. It has received multiple Centennial Farm Awards and is an educational landmark for African American farming history.",
+    
+    "Kindler Farm": "Littleton Kinder purchased 240 acres from A.L. Bowen. The farm has produced cotton, corn, sugar cane, and peanuts while playing a critical role in African American land protection during the Jim Crow era.",
+    
+    "Charleston-Allen Farm": "Founded in 1890 by Anna Charleston, an enslaved woman 30 years prior, this farm evolved from a cotton farm into a 100-acre tree farm in Morgan County, remaining in the family for generations.",
+    
+    "Garfield Hall Farm": "Acquired in 1928, the Hall family farm produced cotton, corn, tobacco, and peanuts. It remains family-owned today, with portions used for tree farming.",
+    
+    "Gilliard Farm": "Jupiter Gilliard, a formerly enslaved man, founded this farm in 1874. Over a century later, it transformed into an organic farm producing fruits, vegetables, and livestock, winning the Centennial Family Farm Award in 2012.",
+    
+    "Williams Farm": "Established in 1883 by Charles Cockrell, this farm has remained in the same family for generations. Today, it produces cotton, peanuts, pecans, and cattle, preserving its agricultural legacy.",
+    
+    "Cooper Farm": "Frank Cooper Sr. purchased this farm in 1885. Over the years, it grew to nearly 300 acres and remains a symbol of long-term Black land ownership, producing cotton and peanuts today.",
+    
+    "Stephens Farm": "Titus Stephens acquired this land after the Civil War, and his descendants still own the 99-acre farm. It has survived through economic hardships and remains committed to sustainable farming."
+}
+
 
 # Calculate the center of the map
 center_lat = sum(lat for _, (lat, lon) in coordinates) / len(coordinates)
 center_lon = sum(lon for _, (lat, lon) in coordinates) / len(coordinates)
-
-# Create a dictionary for farm descriptions (you can replace these placeholder descriptions later)
-farm_descriptions = {
-    "Rountree Farm": "Description for Rountree Farm...",
-    "Morgan Farm": "Description for Morgan Farm...",
-    "Lewis Clark Farm": "Description for Lewis Clark Farm...",
-    # ... Add descriptions for all farms ...
-}
 
 
 # Function to convert image to base64
@@ -82,7 +100,6 @@ folium.TileLayer(
     ext='png', 
     name="Stadia_StamenTerrain"
 ).add_to(m)
-
 # Add markers for each location
 for index, (name, coord) in enumerate(coordinates):
     # Create HTML for the popup with a link
@@ -91,14 +108,15 @@ for index, (name, coord) in enumerate(coordinates):
             <h4>{name}</h4>
             <img src="data:image/png;base64,{base64_images[index]}" width="150px">
             <br>
-            <a href="?farm={name.replace(' ', '_')}" target="_self">View Details</a>
+            <p>{farm_descriptions.get(name, "Description not available")}</p>
+      
         </div>
     '''
-    
+    #       <a href="?farm={name.replace(' ', '_')}" target="_self">View Details</a> add this if u want a link
     folium.Marker(
-    location=coord,
-    popup=folium.Popup(popup_html, max_width=200),
-    icon=folium.Icon(color="red", icon="star", prefix="fa")  # Green star icon
+        location=coord,
+        popup=folium.Popup(popup_html, max_width=250),
+        icon=folium.Icon(color="green", icon="tree", prefix="fa") 
     ).add_to(m)
 
 
