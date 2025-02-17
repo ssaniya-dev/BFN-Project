@@ -1,13 +1,22 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import folium
 from streamlit_folium import st_folium
 import base64
 import os
 
 st.set_page_config(layout="wide")
+    
+# Initialize session state for tracking clicked farm
+if 'selected_farm' not in st.session_state:
+    st.session_state.selected_farm = None
+if 'selected_index' not in st.session_state:
+    st.session_state.selected_index = None
 
-# Title and Introduction
+# Icon
+st.columns(3)[1].image("bfn-top.png")
+## Title and Introduction
 st.markdown("<h1 style='text-align: center; margin-bottom: 10px'>Black Farmers Network Centennial Farms</h1>", unsafe_allow_html=True)
 st.markdown("<h3 style='text-align: center; margin-bottom: 10px;'>What are Black Owned Centennial Farms?</h3>", unsafe_allow_html=True)
 st.markdown(
@@ -17,6 +26,15 @@ st.markdown(
     "Currently, there are 12 centennial farms in Georgia. Please interact with the map to learn more!"
 )
 st.markdown("<h3 style='text-align: center; margin-bottom: 30px;'>Black Farmers Network Centennial Farms Locations in Georgia</h3>", unsafe_allow_html=True)
+
+
+### Load data
+# Load farm data from CSV
+try:
+    df_farms = pd.read_csv('preprocessed_bfn.csv')
+except FileNotFoundError:
+    # Fallback to existing descriptions if CSV not found
+    df_farms = None
 
 # Define farm coordinates
 coordinates = [
@@ -54,12 +72,12 @@ farm_descriptions = {
 center_lat = sum(lat for _, (lat, lon) in coordinates) / len(coordinates)
 center_lon = sum(lon for _, (lat, lon) in coordinates) / len(coordinates)
 
+## Load images
 # Convert images to base64 for display
 def image_to_base64(image_path):
     with open(image_path, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode("utf-8")
-
-# Load images
+    
 image_dir = "images"
 base64_images = []
 image_files = sorted(os.listdir(image_dir))
@@ -84,44 +102,45 @@ for index, (name, coord) in enumerate(coordinates):
     folium.Marker(
         location=coord,
         popup=folium.Popup(popup_html, max_width=250),
-        icon=folium.Icon(color="green", icon="tree", prefix="fa")
+        icon=folium.Icon(color="green", icon="tree", prefix="fa"),
+        name=f"{index}:{name}"
     ).add_to(m)
 
-# Add a title overlay
-title_html = '''
-    <div style="position: fixed; 
-                top: 10px; 
-                left: 50px; 
-                width: 300px; 
-                height: 90px; 
-                z-index:9999; 
-                background-color: rgba(243, 229, 171, 0.8); 
-                border-radius: 10px; 
-                padding: 10px;">
-        <h4>Black Farmers Network Locations</h4>
-        <p>Interactive map showing BFN locations across Georgia</p>
-    </div>
-'''
-m.get_root().html.add_child(folium.Element(title_html))
-
-# Farm detail page handling
-selected_farm = st.query_params.get("farm", "").replace("_", " ")
-if selected_farm in dict(coordinates):
-    st.title(selected_farm)
-    st.markdown("### About the Farm")
-    st.write(farm_descriptions.get(selected_farm, "Description coming soon..."))
+col1, col2 = st.columns([2, 1])
     
-    if st.button("← Back to Map"):
-        st.query_params.clear()
-        st.rerun()
-else:
-    # Display map and farm list
-    col1, col2 = st.columns([2, 1])
+with col1:
+    map_data = st_folium(m, width=800, height=600)
+    # Check if a popup was clicked
+    if map_data and 'last_object_clicked' in map_data and map_data['last_object_clicked']:
+        popup_content = map_data['last_object_clicked']
+        clicked_lat = map_data['last_object_clicked']['lat']
+        clicked_lng = map_data['last_object_clicked']['lng']
+        
+        # Find the closest farm to the clicked coordinates
+        min_distance = float('inf')
+        selected_farm = None
+        selected_idx = None
+        
+        for idx, (farm_name, (farm_lat, farm_lng)) in enumerate(coordinates):
+            distance = ((farm_lat - clicked_lat) ** 2 + (farm_lng - clicked_lng) ** 2) ** 0.5
+            if distance < min_distance:
+                min_distance = distance
+                selected_farm = farm_name
+                selected_idx = idx
+        
+        if min_distance < 0.01:  # Threshold for considering a click as selecting a farm
+            st.session_state.selected_farm = selected_farm
+            st.session_state.selected_index = selected_idx
     
-    with col1:
-        st_folium(m, width=800, height=600)
-    
-    with col2:
-        st.markdown("### Farm Locations")
-        for index, (name, _) in enumerate(coordinates, start=1):
-            st.write(f"{index}. {name}")
+with col2:
+    if st.session_state.selected_farm:
+        st.markdown(f"### **{st.session_state.selected_farm}**")
+        # Get description from CSV if available, otherwise use fallback
+        if df_farms is not None:
+            description = df_farms.iloc[st.session_state.selected_index]['Paragraph Synopsis']
+            st.markdown(description)
+        else:
+            st.markdown(farm_descriptions[st.session_state.selected_farm])
+    else:
+        st.markdown("### Selected Farm Information")
+        st.markdown("*Click on a farm marker to view its information*")
