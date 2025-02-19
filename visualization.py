@@ -25,9 +25,14 @@ st.markdown(
     "The Black Farmers Network (BFN) works to preserve and promote these farms, supporting the families that own them. "
     "Currently, there are 12 centennial farms in Georgia. Please interact with the map to learn more!"
 )
+
+st.markdown(f"""
+<div style="display: flex; justify-content: center;">
+    <iframe src="https://docs.google.com/presentation/d/e/2PACX-1vT9dwiv5jvfKKsn28mh7exTYR_1lVw7-cozgsqvVfhvybURatyPrzu9tyF-MXWgwZ94weCRwdFlz3af/embed?start=false&loop=true&delayms=5000" frameborder="0" width="960" height="569" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+</div>
+""", unsafe_allow_html=True)
+
 st.markdown("<h3 style='text-align: center; margin-bottom: 30px;'>Black Farmers Network Centennial Farms Locations in Georgia</h3>", unsafe_allow_html=True)
-
-
 ### Load data
 # Load farm data from CSV
 try:
@@ -47,9 +52,12 @@ coordinates = [
     ("Charleston-Allen Farm", (33.5794186, -83.4643551)),
     ("Garfield Hall Farm", (32.3595678, -81.7787021)),
     ("Gilliard Farm", (31.2624169, -81.6035062)),
-    ("Williams Farm", (30.8365815, -83.9787808)),
+    ("Kentavia Williams Farm", (30.8365815, -83.9787808)),
     ("Cooper Farm", (33.088805, -81.9534815)),
-    ("Stephens Farm", (31.5439375, -84.2278796))
+    ("Stephens Farm", (31.5439375, -84.2278796)),
+    ("Thompson Farm", (33.3205339, -82.08429009999999)),
+    ("Gough Family Land LLC.", (33.093870, -82.223732)),
+    ("Toomer Farm", (32.4219655, -83.63484299999999))
 ]
 
 # Farm descriptions
@@ -63,9 +71,12 @@ farm_descriptions = {
     "Charleston-Allen Farm": "Founded in 1890 by Anna Charleston, an enslaved woman 30 years prior. It evolved into a 100-acre tree farm in Morgan County.",
     "Garfield Hall Farm": "Acquired in 1928, this family farm has produced cotton, corn, tobacco, and peanuts. Portions of the land are now used for tree farming.",
     "Gilliard Farm": "Jupiter Gilliard, a formerly enslaved man, founded this farm in 1874. It transformed into an organic farm and won the Centennial Family Farm Award in 2012.",
-    "Williams Farm": "Established in 1883 by Charles Cockrell, the farm has remained in the family for generations, producing cotton, peanuts, pecans, and cattle.",
+    "Kentavia Williams Farm": "Established in 1883 by Charles Cockrell, the farm has remained in the family for generations, producing cotton, peanuts, pecans, and cattle.",
     "Cooper Farm": "Frank Cooper Sr. purchased this farm in 1885. Today, it remains a symbol of long-term Black land ownership, producing cotton and peanuts.",
-    "Stephens Farm": "Titus Stephens acquired this land after the Civil War. His descendants still own the 99-acre farm, which remains committed to sustainable farming."
+    "Stephens Farm": "Titus Stephens acquired this land after the Civil War. His descendants still own the 99-acre farm, which remains committed to sustainable farming.",
+    "Thompson Farm": "Thompson Farms, established in 1918, is the oldest African American-owned business in Augusta, Georgia, and received the Georgia Centennial Family Farm award in 2019.",
+    "Gough Family Land LLC.": "The Gough Family Farm, established in 1838, has thrived for over 180 years on values of resilience. It received the Centennial Family Farm Award in 2022.",
+    "Toomer Farm": "Toomer Farm, with roots dating back to 1900, continues a legacy of resilience, producing diverse crops from century-old trees."
 }
 
 # Calculate map center
@@ -102,7 +113,7 @@ for index, (name, coord) in enumerate(coordinates):
     folium.Marker(
         location=coord,
         popup=folium.Popup(popup_html, max_width=250),
-        icon=folium.Icon(color="green", icon="tree", prefix="fa"),
+        icon=folium.Icon(color="green", icon="wheat-awn", prefix="fa"),
         name=f"{index}:{name}"
     ).add_to(m)
 
